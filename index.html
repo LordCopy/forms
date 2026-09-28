@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Feedback | Playful Geometric</title>
+    <meta name="description" content="Share your anonymous event feedback with our team!">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Geometric Background Confetti / Decorations -->
+    <div class="geo-decoration geo-circle-yellow" aria-hidden="true"></div>
+    <div class="geo-decoration geo-pill-pink" aria-hidden="true"></div>
+    <div class="geo-decoration geo-square-mint" aria-hidden="true"></div>
+    <div class="geo-decoration geo-donut-violet" aria-hidden="true"></div>
+
+    <!-- Navigation -->
+    <nav>
+        <div style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.15rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span style="display: inline-block; width: 14px; height: 14px; background: var(--secondary); border: 2px solid var(--border-dark); border-radius: 50%;"></span>
+            EventPulse
+        </div>
+        <a href="admin.html" class="nav-link">
+            Admin Dashboard <span class="btn-icon-bubble" style="width: 20px; height: 20px; font-size: 0.75rem;">&rarr;</span>
+        </a>
+    </nav>
+
+    <main class="container">
+        <div class="glass-panel">
+            <div class="card-tag-badge">
+                <span>✦</span> ANONYMOUS
+            </div>
+
+            <div style="text-align: center;">
+                <div class="badge-sticker violet">
+                    <span>💬</span> YOUR VOICE MATTERS
+                </div>
+                <h1>Event Feedback</h1>
+                <p class="subtitle">Tell us what rocked and what we can level up for next time!</p>
+            </div>
+            
+            <div id="statusMessage" class="message" role="alert" aria-live="polite"></div>
+
+            <form id="feedbackForm">
+                <div class="form-group">
+                    <label for="experience">
+                        🎉 What did you love most?
+                    </label>
+                    <textarea id="experience" placeholder="The keynotes, workshops, vibes, speakers..." required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="improvements">
+                        🚀 Future Improvements
+                    </label>
+                    <textarea id="improvements" placeholder="What could we do even better next time?" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>⭐ Overall Event Rating</label>
+                    <div class="star-rating-container">
+                        <div class="star-rating" role="radiogroup" aria-label="Rate from 1 to 5 stars">
+                            <input type="radio" id="star5" name="rating" value="5" required />
+                            <label for="star5" title="5 stars - Outstanding!">★</label>
+                            
+                            <input type="radio" id="star4" name="rating" value="4" />
+                            <label for="star4" title="4 stars - Great">★</label>
+                            
+                            <input type="radio" id="star3" name="rating" value="3" />
+                            <label for="star3" title="3 stars - Good">★</label>
+                            
+                            <input type="radio" id="star2" name="rating" value="2" />
+                            <label for="star2" title="2 stars - Fair">★</label>
+                            
+                            <input type="radio" id="star1" name="rating" value="1" />
+                            <label for="star1" title="1 star - Needs Work">★</label>
+                        </div>
+                        <div id="ratingLabel" class="star-feedback-label">Select your rating</div>
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn">
+                    <span>Send Feedback</span>
+                    <span class="btn-icon-bubble">&rarr;</span>
+                </button>
+            </form>
+        </div>
+    </main>
+
+    <!-- Main Application Logic -->
+    <script type="module" src="app.js"></script>
+</body>
+</html>

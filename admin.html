@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Event Feedback</title>
+    <meta name="description" content="Admin dashboard to manage attendee feedback, log mistakes, and post notes.">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Geometric Background Decorations -->
+    <div class="geo-decoration geo-circle-yellow" aria-hidden="true"></div>
+    <div class="geo-decoration geo-pill-pink" aria-hidden="true"></div>
+    <div class="geo-decoration geo-square-mint" aria-hidden="true"></div>
+    <div class="geo-decoration geo-donut-violet" aria-hidden="true"></div>
+
+    <nav>
+        <a href="index.html" class="nav-link">
+            &larr; Public Feedback Form
+        </a>
+        <button id="logoutBtn" class="btn-danger" style="display: none; width: auto; padding: 0.5rem 1.25rem; font-size: 0.9rem;">
+            <span>Logout</span> <span class="btn-icon-bubble" style="background: white; color: var(--error);">⏻</span>
+        </button>
+    </nav>
+
+    <main class="container admin-container">
+        <!-- Status Notification Toast -->
+        <div id="adminStatus" class="message" role="alert" aria-live="polite"></div>
+
+        <!-- Login Section -->
+        <div id="loginSection" class="glass-panel" style="max-width: 440px; margin: 3rem auto;">
+            <div class="card-tag-badge" style="background: var(--tertiary); color: var(--border-dark);">
+                <span>🔒</span> RESTRICTED
+            </div>
+            
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <div class="badge-sticker violet">
+                    <span>⚡</span> ORGANIZER PORTAL
+                </div>
+                <h2>Admin Login</h2>
+                <p class="subtitle" style="margin-bottom: 1rem;">Sign in with your organizer credentials</p>
+            </div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="adminEmail">📧 Organizer Email</label>
+                    <input type="email" id="adminEmail" placeholder="admin@event.com" required autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label for="adminPassword">🔑 Password</label>
+                    <input type="password" id="adminPassword" placeholder="••••••••" required autocomplete="current-password">
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1.5rem; user-select: none;">
+                    <input type="checkbox" id="showPasswordToggle" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent);">
+                    <label for="showPasswordToggle" style="margin: 0; font-size: 0.9rem; font-weight: 600; cursor: pointer;">
+                        Show password
+                    </label>
+                </div>
+                <button type="submit" id="loginBtn">
+                    <span>Enter Dashboard</span>
+                    <span class="btn-icon-bubble">&rarr;</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboardSection" style="display: none;">
+            <!-- Header & Stats Banner -->
+            <div style="margin-bottom: 1.75rem;">
+                <div class="badge-sticker mint">
+                    <span>📊</span> REAL-TIME METRICS
+                </div>
+                <h1 style="text-align: left; font-size: 2.25rem;">Event Control Center</h1>
+            </div>
+
+            <div class="stats-banner">
+                <div class="stat-pill" style="border-left: 6px solid var(--quaternary);">
+                    <div>
+                        <div class="lbl">Attendee Feedbacks</div>
+                        <div class="num" id="feedbackCount">0</div>
+                    </div>
+                    <span style="font-size: 1.75rem;">💬</span>
+                </div>
+                <div class="stat-pill" style="border-left: 6px solid var(--secondary);">
+                    <div>
+                        <div class="lbl">Logged Issues</div>
+                        <div class="num" id="mistakesCount">0</div>
+                    </div>
+                    <span style="font-size: 1.75rem;">⚡</span>
+                </div>
+                <div class="stat-pill" style="border-left: 6px solid var(--accent);">
+                    <div>
+                        <div class="lbl">Admin Notes</div>
+                        <div class="num" id="notesCount">0</div>
+                    </div>
+                    <span style="font-size: 1.75rem;">📝</span>
+                </div>
+            </div>
+
+            <!-- Row 1: Issue Logger & Issue Feed -->
+            <div class="grid-container">
+                <!-- Left Column: Log Mistakes -->
+                <div class="glass-panel">
+                    <div class="card-tag-badge" style="background: var(--secondary);">
+                        <span>🚨</span> INCIDENT LOG
+                    </div>
+                    <h2>Log Event Issue</h2>
+                    <form id="mistakeForm">
+                        <div class="form-group">
+                            <label for="mistakeCategory">Issue Category</label>
+                            <select id="mistakeCategory" required>
+                                <option value="" disabled selected>Choose category...</option>
+                                <option value="Crowd Management">👥 Crowd Management</option>
+                                <option value="Bad Sound Quality">🔊 Sound & AV Quality</option>
+                                <option value="Logistics">📦 Logistics & Venue</option>
+                                <option value="Ticketing">🎟️ Ticketing & Check-in</option>
+                                <option value="Other">💡 Other / Miscellaneous</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="mistakeNotes">Incident Details</label>
+                            <textarea id="mistakeNotes" placeholder="What happened, impact, and immediate action taken..." required></textarea>
+                        </div>
+
+                        <button type="submit" id="mistakeSubmitBtn" style="background: var(--secondary); color: white;">
+                            <span>Log Issue to Database</span>
+                            <span class="btn-icon-bubble" style="color: var(--secondary);">+</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Right Column: View Mistakes -->
+                <div class="glass-panel" style="display: flex; flex-direction: column;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h2>Recent Issues</h2>
+                        <button id="refreshMistakesBtn" class="btn-secondary" style="width: auto; padding: 0.4rem 0.9rem; font-size: 0.85rem;">
+                            🔄 Refresh
+                        </button>
+                    </div>
+                    <div id="mistakesList" style="flex: 1; overflow-y: auto; max-height: 420px; padding-right: 0.4rem;">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">⏳</div>
+                            <p>Loading internal issues...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 2: Notes & Discussion -->
+            <div class="grid-container">
+                <!-- Left Column: Add Note -->
+                <div class="glass-panel">
+                    <div class="card-tag-badge" style="background: var(--accent);">
+                        <span>📝</span> QUICK MEMO
+                    </div>
+                    <h2>Organizer Discussions</h2>
+                    <form id="noteForm">
+                        <div class="form-group">
+                            <label for="noteContent">Post Note</label>
+                            <textarea id="noteContent" placeholder="Share reminders, coordination notes, or feedback observations..." required style="min-height: 90px;"></textarea>
+                        </div>
+                        <button type="submit" id="noteSubmitBtn">
+                            <span>Post Organizer Note</span>
+                            <span class="btn-icon-bubble">+</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Right Column: View Notes -->
+                <div class="glass-panel" style="display: flex; flex-direction: column;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h2>Notice Board</h2>
+                        <button id="refreshNotesBtn" class="btn-secondary" style="width: auto; padding: 0.4rem 0.9rem; font-size: 0.85rem;">
+                            🔄 Refresh
+                        </button>
+                    </div>
+                    <div id="notesList" style="flex: 1; overflow-y: auto; max-height: 320px; padding-right: 0.4rem;">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">⏳</div>
+                            <p>Loading notes...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 3: Attendee Feedback Stream -->
+            <div class="glass-panel">
+                <div class="card-tag-badge" style="background: var(--quaternary); color: var(--border-dark);">
+                    <span>⭐</span> PUBLIC VOICES
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                    <h2>Attendee Feedbacks Stream</h2>
+                    <button id="refreshFeedbackBtn" class="btn-secondary" style="width: auto; padding: 0.4rem 1rem; font-size: 0.85rem;">
+                        🔄 Refresh Feed
+                    </button>
+                </div>
+                <div id="feedbackList" class="grid-container" style="max-height: 650px; overflow-y: auto; padding-right: 0.4rem;">
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <div class="empty-state-icon">⏳</div>
+                        <p>Loading feedback stream...</p>
+                    </div>
+                </div>
+            </div>
+        </div> <!-- End Dashboard Section -->
+    </main>
+
+    <!-- Admin Application Logic -->
+    <script type="module" src="admin.js"></script>
+</body>
+</html>

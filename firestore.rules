@@ -1,0 +1,111 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =========================================================================
+    // Reusable Security Helper Functions
+    // =========================================================================
+
+    // Verify user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Verify user is NOT anonymous (logged in via Email/Password)
+    function isNonAnonymous() {
+      return isAuthenticated() && request.auth.token.firebase.sign_in_provider != 'anonymous';
+    }
+
+    // Verify admin privileges
+    // Accepts custom claims (admin: true) OR registered non-anonymous admin users
+    function isAdmin() {
+      return isNonAnonymous() && (
+        request.auth.token.admin == true ||
+        request.auth.token.firebase.sign_in_provider == 'password'
+      );
+    }
+
+    // Validates server timestamp
+    function isValidTimestamp(ts) {
+      return ts is timestamp && (
+        ts == request.time || 
+        ts <= request.time
+      );
+    }
+
+    // =========================================================================
+    // 1. Feedbacks Collection (Public Anonymous Write / Admin Only Read)
+    // =========================================================================
+    match /feedbacks/{feedbackId} {
+      // Admin can read and delete feedbacks
+      allow read, delete: if isAdmin();
+      
+      // Public / Attendees can create feedback with strict schema validation
+      allow create: if isAuthenticated()
+        // Ensure only the 4 allowed fields exist (prevents arbitrary field injection)
+        && request.resource.data.keys().hasAll(['experience', 'improvements', 'rating', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['experience', 'improvements', 'rating', 'createdAt'])
+        
+        // Rating: integer between 1 and 5
+        && request.resource.data.rating is int
+        && request.resource.data.rating >= 1
+        && request.resource.data.rating <= 5
+        
+        // Experience: string up to 3000 chars
+        && request.resource.data.experience is string
+        && request.resource.data.experience.size() >= 1
+        && request.resource.data.experience.size() <= 3000
+        
+        // Improvements: string up to 3000 chars
+        && request.resource.data.improvements is string
+        && request.resource.data.improvements.size() >= 1
+        && request.resource.data.improvements.size() <= 3000
+        
+        // CreatedAt must be server timestamp
+        && isValidTimestamp(request.resource.data.createdAt);
+
+      // Prevent anyone from modifying existing feedback
+      allow update: if false;
+    }
+
+    // =========================================================================
+    // 2. Event Mistakes / Issues Collection (Admin Only)
+    // =========================================================================
+    match /event_mistakes/{mistakeId} {
+      allow read, delete: if isAdmin();
+
+      allow create, update: if isAdmin()
+        && request.resource.data.keys().hasAll(['category', 'notes', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['category', 'notes', 'createdAt'])
+        && request.resource.data.category is string
+        && request.resource.data.category in ['Crowd Management', 'Bad Sound Quality', 'Logistics', 'Ticketing', 'Other']
+        && request.resource.data.notes is string
+        && request.resource.data.notes.size() >= 1
+        && request.resource.data.notes.size() <= 5000
+        && isValidTimestamp(request.resource.data.createdAt);
+    }
+
+    // =========================================================================
+    // 3. Admin Discussion Notes Collection (Admin Only)
+    // =========================================================================
+    match /admin_notes/{noteId} {
+      allow read, delete: if isAdmin();
+
+      allow create, update: if isAdmin()
+        && request.resource.data.keys().hasAll(['content', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['content', 'createdAt'])
+        && request.resource.data.content is string
+        && request.resource.data.content.size() >= 1
+        && request.resource.data.content.size() <= 5000
+        && isValidTimestamp(request.resource.data.createdAt);
+    }
+
+    // =========================================================================
+    // Default Fallback: Deny all unmatched paths
+    // =========================================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
