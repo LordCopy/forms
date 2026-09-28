@@ -9,7 +9,10 @@ import {
     getDocs, 
     serverTimestamp, 
     query, 
-    orderBy 
+    orderBy,
+    deleteDoc,
+    doc,
+    writeBatch
 } from './firebase-config.js';
 
 const mistakeForm = document.getElementById('mistakeForm');
@@ -28,6 +31,31 @@ const logoutBtn = document.getElementById('logoutBtn');
 const feedbackCountEl = document.getElementById('feedbackCount');
 const mistakesCountEl = document.getElementById('mistakesCount');
 const notesCountEl = document.getElementById('notesCount');
+
+// Modals and Action Buttons
+const openArchiveModalBtn = document.getElementById('openArchiveModalBtn');
+const openClearModalBtn = document.getElementById('openClearModalBtn');
+const openArchiveListBtn = document.getElementById('openArchiveListBtn');
+
+const archiveModal = document.getElementById('archiveModal');
+const closeArchiveModalBtn = document.getElementById('closeArchiveModalBtn');
+const archiveForm = document.getElementById('archiveForm');
+const archiveEventName = document.getElementById('archiveEventName');
+const archiveFeedbackPreview = document.getElementById('archiveFeedbackPreview');
+const archiveIssuesPreview = document.getElementById('archiveIssuesPreview');
+const archiveNotesPreview = document.getElementById('archiveNotesPreview');
+const archiveWipeActiveCheckbox = document.getElementById('archiveWipeActiveCheckbox');
+const archiveSubmitBtn = document.getElementById('archiveSubmitBtn');
+
+const clearModal = document.getElementById('clearModal');
+const closeClearModalBtn = document.getElementById('closeClearModalBtn');
+const clearForm = document.getElementById('clearForm');
+const clearConfirmInput = document.getElementById('clearConfirmInput');
+const clearSubmitBtn = document.getElementById('clearSubmitBtn');
+
+const archiveListModal = document.getElementById('archiveListModal');
+const closeArchiveListModalBtn = document.getElementById('closeArchiveListModalBtn');
+const archivedList = document.getElementById('archivedList');
 
 let isAuthReady = false;
 
@@ -51,10 +79,7 @@ onAuthStateChanged(auth, (user) => {
         logoutBtn.style.display = 'inline-flex';
         
         console.log("Admin authenticated.");
-        // Fetch all datasets
-        fetchMistakes();
-        fetchFeedbacks();
-        fetchNotes();
+        fetchAllData();
     } else {
         isAuthReady = false;
         loginSection.style.display = 'block';
@@ -62,6 +87,12 @@ onAuthStateChanged(auth, (user) => {
         logoutBtn.style.display = 'none';
     }
 });
+
+function fetchAllData() {
+    fetchMistakes();
+    fetchFeedbacks();
+    fetchNotes();
+}
 
 // Login Form Handler
 loginForm.addEventListener('submit', async (e) => {
@@ -319,6 +350,290 @@ async function fetchFeedbacks() {
         console.error("Error fetching feedbacks: ", error);
         feedbackList.innerHTML = '<div class="empty-state" style="grid-column: 1 / -1;"><p style="color: var(--error); font-weight: 700;">Failed to load feedback from database.</p></div>';
     }
+}
+
+// =========================================================================
+// 7. Modals & Data Lifecycle (Archive & Clear All with Confirmation)
+// =========================================================================
+
+// Modal Toggle Helpers
+function openModal(modal) {
+    modal.classList.add('open');
+}
+
+function closeModal(modal) {
+    modal.classList.remove('open');
+}
+
+// Archive Modal Open
+if (openArchiveModalBtn) {
+    openArchiveModalBtn.addEventListener('click', () => {
+        if (archiveFeedbackPreview) archiveFeedbackPreview.textContent = feedbackCountEl.textContent || '0';
+        if (archiveIssuesPreview) archiveIssuesPreview.textContent = mistakesCountEl.textContent || '0';
+        if (archiveNotesPreview) archiveNotesPreview.textContent = notesCountEl.textContent || '0';
+        if (archiveEventName) archiveEventName.value = '';
+        openModal(archiveModal);
+    });
+}
+
+if (closeArchiveModalBtn) {
+    closeArchiveModalBtn.addEventListener('click', () => closeModal(archiveModal));
+}
+
+// Clear All Modal Open
+if (openClearModalBtn) {
+    openClearModalBtn.addEventListener('click', () => {
+        if (clearConfirmInput) clearConfirmInput.value = '';
+        if (clearSubmitBtn) clearSubmitBtn.disabled = true;
+        openModal(clearModal);
+    });
+}
+
+if (closeClearModalBtn) {
+    closeClearModalBtn.addEventListener('click', () => closeModal(clearModal));
+}
+
+// Type "CONFIRM" unlock logic
+if (clearConfirmInput) {
+    clearConfirmInput.addEventListener('input', (e) => {
+        if (clearSubmitBtn) {
+            clearSubmitBtn.disabled = e.target.value.trim().toUpperCase() !== 'CONFIRM';
+        }
+    });
+}
+
+// Archive List Modal Open
+if (openArchiveListBtn) {
+    openArchiveListBtn.addEventListener('click', () => {
+        openModal(archiveListModal);
+        fetchArchivedEvents();
+    });
+}
+
+if (closeArchiveListModalBtn) {
+    closeArchiveListModalBtn.addEventListener('click', () => closeModal(archiveListModal));
+}
+
+// Close modals on clicking backdrop
+[archiveModal, clearModal, archiveListModal].forEach(modal => {
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal(modal);
+        });
+    }
+});
+
+// Close modals on Escape key
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        [archiveModal, clearModal, archiveListModal].forEach(modal => {
+            if (modal && modal.classList.contains('open')) closeModal(modal);
+        });
+    }
+});
+
+// Helper: Delete all documents in a collection
+async function deleteCollectionDocs(collectionName) {
+    const q = query(collection(db, collectionName));
+    const snapshot = await getDocs(q);
+    const deletePromises = [];
+    snapshot.forEach(d => {
+        deletePromises.push(deleteDoc(doc(db, collectionName, d.id)));
+    });
+    await Promise.all(deletePromises);
+}
+
+// Helper: Extract all document data from a collection
+async function getCollectionData(collectionName) {
+    const q = query(collection(db, collectionName));
+    const snapshot = await getDocs(q);
+    const items = [];
+    snapshot.forEach(d => {
+        const item = d.data();
+        // Convert timestamp to ISO string for storage/export
+        if (item.createdAt && item.createdAt.toDate) {
+            item.createdAtISO = item.createdAt.toDate().toISOString();
+        }
+        items.push({ id: d.id, ...item });
+    });
+    return items;
+}
+
+// 8. Handle Archiving an Event
+if (archiveForm) {
+    archiveForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!isAuthReady) return;
+
+        const eventName = archiveEventName.value.trim();
+        const shouldWipeActive = archiveWipeActiveCheckbox.checked;
+        
+        archiveSubmitBtn.disabled = true;
+        archiveSubmitBtn.innerHTML = `<span>Archiving Event...</span> <span class="btn-icon-bubble">⏳</span>`;
+
+        try {
+            // 1. Gather all current active data
+            const [feedbacks, mistakes, notes] = await Promise.all([
+                getCollectionData('feedbacks'),
+                getCollectionData('event_mistakes'),
+                getCollectionData('admin_notes')
+            ]);
+
+            // Calculate average rating
+            let totalRating = 0;
+            feedbacks.forEach(f => { totalRating += (parseInt(f.rating, 10) || 0); });
+            const avgRating = feedbacks.length > 0 ? (totalRating / feedbacks.length).toFixed(1) : '0';
+
+            // 2. Save bundle to 'archived_events' collection
+            await addDoc(collection(db, 'archived_events'), {
+                eventName: eventName,
+                archivedAt: serverTimestamp(),
+                metrics: {
+                    totalFeedbacks: feedbacks.length,
+                    averageRating: avgRating,
+                    totalIssues: mistakes.length,
+                    totalNotes: notes.length
+                },
+                feedbacks: feedbacks,
+                mistakes: mistakes,
+                notes: notes
+            });
+
+            // 3. If selected, wipe active dashboard records
+            if (shouldWipeActive) {
+                await Promise.all([
+                    deleteCollectionDocs('feedbacks'),
+                    deleteCollectionDocs('event_mistakes'),
+                    deleteCollectionDocs('admin_notes')
+                ]);
+            }
+
+            closeModal(archiveModal);
+            showStatus(`Event "${eventName}" archived successfully! ${shouldWipeActive ? 'Active board reset.' : ''}`, 'success');
+            fetchAllData();
+
+        } catch (error) {
+            console.error("Error archiving event:", error);
+            showStatus("Failed to archive event. Please try again.", "error");
+        } finally {
+            archiveSubmitBtn.disabled = false;
+            archiveSubmitBtn.innerHTML = `<span>Archive Event</span> <span class="btn-icon-bubble">&rarr;</span>`;
+        }
+    });
+}
+
+// 9. Handle Permanently Wiping Active Data
+if (clearForm) {
+    clearForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!isAuthReady) return;
+
+        clearSubmitBtn.disabled = true;
+        clearSubmitBtn.innerHTML = `<span>Wiping Data...</span> <span class="btn-icon-bubble">⏳</span>`;
+
+        try {
+            await Promise.all([
+                deleteCollectionDocs('feedbacks'),
+                deleteCollectionDocs('event_mistakes'),
+                deleteCollectionDocs('admin_notes')
+            ]);
+
+            closeModal(clearModal);
+            showStatus("All active feedbacks, issues, and notes have been cleared.", "success");
+            fetchAllData();
+
+        } catch (error) {
+            console.error("Error wiping data:", error);
+            showStatus("Database error while wiping data.", "error");
+        } finally {
+            clearSubmitBtn.disabled = false;
+            clearSubmitBtn.innerHTML = `<span>Permanently Wipe All Data</span> <span class="btn-icon-bubble">🗑️</span>`;
+        }
+    });
+}
+
+// 10. Fetch and Display Past Archived Events
+async function fetchArchivedEvents() {
+    try {
+        const q = query(collection(db, "archived_events"), orderBy("archivedAt", "desc"));
+        const querySnapshot = await getDocs(q);
+
+        archivedList.innerHTML = '';
+
+        if (querySnapshot.empty) {
+            archivedList.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">📦</div>
+                    <p style="font-weight: 700; color: var(--text-main);">No archived events yet</p>
+                    <p class="subtitle" style="font-size: 0.9rem; margin-top: 0.25rem;">Use "Archive Event" on the main dashboard to store historical records.</p>
+                </div>`;
+            return;
+        }
+
+        querySnapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            const dateStr = data.archivedAt ? data.archivedAt.toDate().toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : 'Unknown Date';
+            const metrics = data.metrics || { totalFeedbacks: 0, averageRating: '0', totalIssues: 0, totalNotes: 0 };
+            
+            const card = document.createElement('div');
+            card.className = 'archive-card';
+            card.innerHTML = `
+                <div class="meta">
+                    <span style="font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.15rem; color: var(--text-main);">
+                        📦 ${escapeHTML(data.eventName)}
+                    </span>
+                    <span style="font-size: 0.8rem; font-weight: 600;">${dateStr}</span>
+                </div>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; font-size: 0.9rem; font-weight: 700;">
+                    <span class="rating-stamp">⭐ ${metrics.averageRating}/5 (${metrics.totalFeedbacks} feedbacks)</span>
+                    <span class="category-tag logistics">⚡ ${metrics.totalIssues} Issues</span>
+                    <span class="category-tag ticketing">📝 ${metrics.totalNotes} Notes</span>
+                </div>
+                <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+                    <button class="btn-secondary export-json-btn" data-id="${docSnap.id}" style="width: auto; padding: 0.4rem 0.85rem; font-size: 0.85rem;">
+                        📥 Download JSON
+                    </button>
+                    <button class="btn-danger delete-archive-btn" data-id="${docSnap.id}" style="width: auto; padding: 0.4rem 0.85rem; font-size: 0.85rem;">
+                        🗑️ Delete
+                    </button>
+                </div>
+            `;
+            
+            // Attach Export JSON event
+            const exportBtn = card.querySelector('.export-json-btn');
+            exportBtn.addEventListener('click', () => exportArchiveAsJSON(data));
+
+            // Attach Delete Archive event
+            const deleteBtn = card.querySelector('.delete-archive-btn');
+            deleteBtn.addEventListener('click', async () => {
+                if (confirm(`Delete archive "${data.eventName}" permanently?`)) {
+                    await deleteDoc(doc(db, 'archived_events', docSnap.id));
+                    showStatus(`Archive "${data.eventName}" deleted.`, 'success');
+                    fetchArchivedEvents();
+                }
+            });
+
+            archivedList.appendChild(card);
+        });
+
+    } catch (error) {
+        console.error("Error fetching archived events:", error);
+        archivedList.innerHTML = '<div class="empty-state"><p style="color: var(--error); font-weight: 700;">Failed to load archived events.</p></div>';
+    }
+}
+
+// Export Archive as Downloadable JSON file
+function exportArchiveAsJSON(data) {
+    const jsonStr = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${(data.eventName || 'event-archive').toLowerCase().replace(/\s+/g, '-')}-archive.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
 
 // XSS Protection Helper

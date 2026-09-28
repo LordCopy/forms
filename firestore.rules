@@ -7,18 +7,14 @@ service cloud.firestore {
     // Reusable Security Helper Functions
     // =========================================================================
 
-    // Verify user is authenticated
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    // Verify user is NOT anonymous (logged in via Email/Password)
     function isNonAnonymous() {
       return isAuthenticated() && request.auth.token.firebase.sign_in_provider != 'anonymous';
     }
 
-    // Verify admin privileges
-    // Accepts custom claims (admin: true) OR registered non-anonymous admin users
     function isAdmin() {
       return isNonAnonymous() && (
         request.auth.token.admin == true ||
@@ -26,7 +22,6 @@ service cloud.firestore {
       );
     }
 
-    // Validates server timestamp
     function isValidTimestamp(ts) {
       return ts is timestamp && (
         ts == request.time || 
@@ -35,37 +30,25 @@ service cloud.firestore {
     }
 
     // =========================================================================
-    // 1. Feedbacks Collection (Public Anonymous Write / Admin Only Read)
+    // 1. Feedbacks Collection (Public Anonymous Write / Admin Read & Delete)
     // =========================================================================
     match /feedbacks/{feedbackId} {
-      // Admin can read and delete feedbacks
       allow read, delete: if isAdmin();
       
-      // Public / Attendees can create feedback with strict schema validation
       allow create: if isAuthenticated()
-        // Ensure only the 4 allowed fields exist (prevents arbitrary field injection)
         && request.resource.data.keys().hasAll(['experience', 'improvements', 'rating', 'createdAt'])
         && request.resource.data.keys().hasOnly(['experience', 'improvements', 'rating', 'createdAt'])
-        
-        // Rating: integer between 1 and 5
         && request.resource.data.rating is int
         && request.resource.data.rating >= 1
         && request.resource.data.rating <= 5
-        
-        // Experience: string up to 3000 chars
         && request.resource.data.experience is string
         && request.resource.data.experience.size() >= 1
         && request.resource.data.experience.size() <= 3000
-        
-        // Improvements: string up to 3000 chars
         && request.resource.data.improvements is string
         && request.resource.data.improvements.size() >= 1
         && request.resource.data.improvements.size() <= 3000
-        
-        // CreatedAt must be server timestamp
         && isValidTimestamp(request.resource.data.createdAt);
 
-      // Prevent anyone from modifying existing feedback
       allow update: if false;
     }
 
@@ -99,6 +82,13 @@ service cloud.firestore {
         && request.resource.data.content.size() >= 1
         && request.resource.data.content.size() <= 5000
         && isValidTimestamp(request.resource.data.createdAt);
+    }
+
+    // =========================================================================
+    // 4. Archived Events Collection (Admin Only)
+    // =========================================================================
+    match /archived_events/{eventId} {
+      allow read, write, delete: if isAdmin();
     }
 
     // =========================================================================

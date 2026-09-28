@@ -76,7 +76,6 @@ html {
 body {
   font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   background-color: var(--bg-color);
-  /* Dot Matrix Canvas Texture */
   background-image: radial-gradient(rgba(30, 41, 59, 0.13) 2px, transparent 2px);
   background-size: 26px 26px;
   background-position: 0 0;
@@ -323,20 +322,10 @@ h2 {
   }
 }
 
-.badge-sticker.pink {
-  background: var(--secondary);
-  color: white;
-}
-
-.badge-sticker.violet {
-  background: var(--accent);
-  color: white;
-}
-
-.badge-sticker.mint {
-  background: var(--quaternary);
-  color: var(--border-dark);
-}
+.badge-sticker.pink { background: var(--secondary); color: white; }
+.badge-sticker.violet { background: var(--accent); color: white; }
+.badge-sticker.mint { background: var(--quaternary); color: var(--border-dark); }
+.badge-sticker.danger { background: #FEE2E2; color: var(--error); }
 
 /* ==========================================================================
    The "Sticker" Card Component
@@ -365,7 +354,6 @@ h2 {
   box-shadow: var(--shadow-pop-xl);
 }
 
-/* Asymmetric Accent Card Header */
 .card-tag-badge {
   position: absolute;
   top: -15px;
@@ -527,6 +515,20 @@ button:disabled, .btn:disabled {
   box-shadow: var(--shadow-pop);
 }
 
+/* Archive Button */
+.btn-archive {
+  background: #EDE9FE;
+  color: var(--accent);
+  border: var(--border-width) solid var(--border-dark);
+  box-shadow: var(--shadow-pop-sm);
+}
+
+.btn-archive:hover {
+  background: var(--accent);
+  color: white;
+  box-shadow: var(--shadow-pop);
+}
+
 /* Button Icon Bubble */
 .btn-icon-bubble {
   display: inline-flex;
@@ -568,7 +570,6 @@ button:hover .btn-icon-bubble {
   max-width: 100%;
 }
 
-/* Tactile Big Star Bar with Fluid Sizing */
 .star-rating {
   display: flex;
   flex-direction: row-reverse;
@@ -585,7 +586,6 @@ button:hover .btn-icon-bubble {
 }
 
 .star-rating label {
-  /* Fluid responsive star scale: 2.6rem on mobile up to 4.5rem on desktop */
   font-size: clamp(2.5rem, 9.5vw, 4.5rem) !important;
   line-height: 1 !important;
   color: #D1D5DB;
@@ -602,7 +602,6 @@ button:hover .btn-icon-bubble {
   touch-action: manipulation;
 }
 
-/* Hover Physics - Wiggle & Scale */
 @media (hover: hover) {
   .star-rating label:hover {
     transform: scale(1.35) rotate(14deg);
@@ -619,7 +618,6 @@ button:hover .btn-icon-bubble {
   }
 }
 
-/* Checked Star State - Star Pop Animation */
 .star-rating input:checked ~ label {
   color: #F59E0B;
   transform: scale(1.15);
@@ -638,7 +636,6 @@ button:hover .btn-icon-bubble {
   100% { transform: scale(1.15) rotate(0deg); }
 }
 
-/* Interactive Feedback Pill Label */
 .star-feedback-label {
   font-family: 'Outfit', sans-serif;
   font-size: clamp(0.95rem, 2.5vw, 1.15rem);
@@ -723,6 +720,15 @@ button:hover .btn-icon-bubble {
   }
 }
 
+/* Action Pill Bar */
+.action-pill-bar {
+  display: flex;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 1.75rem;
+}
+
 /* Stats Pill Bar */
 .stats-banner {
   display: grid;
@@ -771,7 +777,8 @@ button:hover .btn-icon-bubble {
 /* The Sticker List Cards */
 .feedback-card,
 .mistake-card,
-.note-card {
+.note-card,
+.archive-card {
   background: var(--card-bg);
   border: var(--border-width) solid var(--border-dark);
   padding: clamp(1.15rem, 3vw, 1.5rem);
@@ -786,23 +793,16 @@ button:hover .btn-icon-bubble {
 
 .feedback-card:hover,
 .mistake-card:hover,
-.note-card:hover {
+.note-card:hover,
+.archive-card:hover {
   transform: translate(-3px, -3px);
   box-shadow: var(--shadow-pop-lg);
 }
 
-/* Card Specific Hard-Border Badges */
-.mistake-card {
-  border-left: 10px solid var(--secondary);
-}
-
-.note-card {
-  border-left: 10px solid var(--accent);
-}
-
-.feedback-card {
-  border-left: 10px solid var(--quaternary);
-}
+.mistake-card { border-left: 10px solid var(--secondary); }
+.note-card { border-left: 10px solid var(--accent); }
+.feedback-card { border-left: 10px solid var(--quaternary); }
+.archive-card { border-left: 10px solid var(--tertiary); }
 
 .meta {
   font-size: clamp(0.8rem, 2vw, 0.9rem);
@@ -864,10 +864,84 @@ button:hover .btn-icon-bubble {
   animation: floatSlow 4s ease-in-out infinite alternate;
 }
 
+/* ==========================================================================
+   Memphis Modal Dialogs & Backdrops
+   ========================================================================== */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(30, 41, 59, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.modal-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-card {
+  background: var(--card-bg);
+  border: var(--border-width) solid var(--border-dark);
+  border-radius: var(--radius-lg);
+  padding: clamp(1.5rem, 5vw, 2.5rem);
+  width: 100%;
+  max-width: 520px;
+  box-shadow: var(--shadow-pop-xl);
+  position: relative;
+  transform: scale(0.9) translateY(15px);
+  transition: var(--transition-bounce);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-backdrop.open .modal-card {
+  transform: scale(1) translateY(0);
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 36px;
+  height: 36px;
+  background: var(--muted-bg);
+  border: 2px solid var(--border-dark);
+  border-radius: 50%;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 900;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 2px 2px 0px var(--border-dark);
+  transition: var(--transition-bounce);
+  padding: 0;
+}
+
+.modal-close-btn:hover {
+  background: var(--error-bg);
+  color: var(--error);
+  transform: scale(1.1) rotate(90deg);
+}
+
 /* Custom Scrollbars */
 #mistakesList,
 #notesList,
-#feedbackList {
+#feedbackList,
+#archivedList,
+.modal-card {
   scrollbar-width: thin;
   scrollbar-color: var(--border-dark) var(--bg-color);
   -webkit-overflow-scrolling: touch;
@@ -875,13 +949,17 @@ button:hover .btn-icon-bubble {
 
 #mistakesList::-webkit-scrollbar,
 #notesList::-webkit-scrollbar,
-#feedbackList::-webkit-scrollbar {
+#feedbackList::-webkit-scrollbar,
+#archivedList::-webkit-scrollbar,
+.modal-card::-webkit-scrollbar {
   width: 7px;
 }
 
 #mistakesList::-webkit-scrollbar-thumb,
 #notesList::-webkit-scrollbar-thumb,
-#feedbackList::-webkit-scrollbar-thumb {
+#feedbackList::-webkit-scrollbar-thumb,
+#archivedList::-webkit-scrollbar-thumb,
+.modal-card::-webkit-scrollbar-thumb {
   background: var(--border-dark);
   border-radius: var(--radius-full);
 }

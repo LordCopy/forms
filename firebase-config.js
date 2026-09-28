@@ -1,7 +1,18 @@
 // firebase-config.js - Modular Firebase SDK Initialization
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import { getAuth, signInAnonymously, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { 
+  getFirestore, 
+  collection, 
+  addDoc, 
+  getDocs, 
+  serverTimestamp, 
+  query, 
+  orderBy, 
+  deleteDoc, 
+  doc, 
+  writeBatch 
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 // Load configuration from gitignored config.js or injected runtime environment
 let config = null;
@@ -36,5 +47,8 @@ export {
   getDocs,
   serverTimestamp,
   query,
-  orderBy
+  orderBy,
+  deleteDoc,
+  doc,
+  writeBatch
 };
