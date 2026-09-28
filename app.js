@@ -16,10 +16,10 @@ let isAuthReady = false;
 
 const ratingTexts = {
     '1': '⭐ 1 Star — Needs Improvement',
-    '2': '⭐⭐ 2 Stars — Fair Experience',
-    '3': '⭐⭐⭐ 3 Stars — Good Event',
-    '4': '⭐⭐⭐⭐ 4 Stars — Great Vibes!',
-    '5': '⭐⭐⭐⭐⭐ 5 Stars — Absolutely Amazing! 🎉'
+    '2': '⭐⭐ 2 Stars — Fair (Needed more live demo)',
+    '3': '⭐⭐⭐ 3 Stars — Good Session Overview',
+    '4': '⭐⭐⭐⭐ 4 Stars — Great Insights & Helpful Perks!',
+    '5': '⭐⭐⭐⭐⭐ 5 Stars — Super Helpful & Ready to Claim Pack! 🚀'
 };
 
 // Update rating label on selection with bouncy pop active class
@@ -89,7 +89,7 @@ feedbackForm.addEventListener('submit', async (e) => {
             createdAt: serverTimestamp()
         });
 
-        showStatus("Thank you! Your feedback has been recorded.", "success");
+        showStatus("Thank you for your feedback on today's session!", "success");
         feedbackForm.reset();
         
         if (ratingElement) ratingElement.checked = false;
@@ -103,6 +103,6 @@ feedbackForm.addEventListener('submit', async (e) => {
         showStatus("An error occurred while submitting. Please try again.", "error");
     } finally {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = `<span>Send Feedback</span> <span class="btn-icon-bubble">&rarr;</span>`;
+        submitBtn.innerHTML = `<span>Submit Session Feedback</span> <span class="btn-icon-bubble">&rarr;</span>`;
     }
 });

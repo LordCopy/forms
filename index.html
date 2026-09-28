@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Event Feedback | Playful Geometric</title>
-    <meta name="description" content="Share your anonymous event feedback with our team!">
+    <title>GitHub Student Developer Pack | Session Feedback</title>
+    <meta name="description" content="Share your anonymous feedback for the GitHub Student Developer Pack awareness session hosted by GitHub Community MIT AOE.">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -18,7 +18,7 @@
     <nav>
         <div style="font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.15rem; display: flex; align-items: center; gap: 0.5rem;">
             <span style="display: inline-block; width: 14px; height: 14px; background: var(--secondary); border: 2px solid var(--border-dark); border-radius: 50%;"></span>
-            EventPulse
+            GitHub Community • MIT AOE
         </div>
         <a href="admin.html" class="nav-link">
             Admin Dashboard <span class="btn-icon-bubble" style="width: 20px; height: 20px; font-size: 0.75rem;">&rarr;</span>
@@ -33,10 +33,13 @@
 
             <div style="text-align: center;">
                 <div class="badge-sticker violet">
-                    <span>💬</span> YOUR VOICE MATTERS
+                    <span>🎓</span> ONLINE AWARENESS SESSION
                 </div>
-                <h1>Event Feedback</h1>
-                <p class="subtitle">Tell us what rocked and what we can level up for next time!</p>
+                <h1>GitHub Student Developer Pack</h1>
+                <p class="subtitle" style="max-width: 500px; margin-left: auto; margin-right: auto;">
+                    Hosted by <strong>Atharva Baodhankar</strong> & <strong>Tejas Patil</strong> <br>
+                    <span style="display: inline-block; margin-top: 0.25rem; color: var(--accent); font-weight: 700;">GitHub Community MIT AOE</span>
+                </p>
             </div>
             
             <div id="statusMessage" class="message" role="alert" aria-live="polite"></div>
@@ -44,20 +47,20 @@
             <form id="feedbackForm">
                 <div class="form-group">
                     <label for="experience">
-                        🎉 What did you love most?
+                        💡 What was most valuable about today's session?
                     </label>
-                    <textarea id="experience" placeholder="The keynotes, workshops, vibes, speakers..." required></textarea>
+                    <textarea id="experience" placeholder="e.g. Free GitHub Pro & Copilot, $100 Azure credits, JetBrains IDEs, free domains, or GitHub profile tips for recruiters..." required></textarea>
                 </div>
                 
                 <div class="form-group">
                     <label for="improvements">
-                        🚀 Future Improvements
+                        🚀 Future Workshops & Improvements
                     </label>
-                    <textarea id="improvements" placeholder="What could we do even better next time?" required></textarea>
+                    <textarea id="improvements" placeholder="What topics should we cover next? (e.g. Hands-on Git & GitHub workshop, Open Source contribution, resume building, hackathons)..." required></textarea>
                 </div>
 
                 <div class="form-group">
-                    <label>⭐ Overall Event Rating</label>
+                    <label>⭐ How would you rate today's session?</label>
                     <div class="star-rating-container">
                         <div class="star-rating" role="radiogroup" aria-label="Rate from 1 to 5 stars">
                             <input type="radio" id="star5" name="rating" value="5" required />
@@ -80,7 +83,7 @@
                 </div>
 
                 <button type="submit" id="submitBtn">
-                    <span>Send Feedback</span>
+                    <span>Submit Session Feedback</span>
                     <span class="btn-icon-bubble">&rarr;</span>
                 </button>
             </form>
